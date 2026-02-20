@@ -170,15 +170,5 @@ sistema.exe
 
 ---
 
-## 👨‍💻 Conceptos Aplicados
-
-- **Estructuras (`struct`)** para modelar datos
-- **Vectores (`vector`)** para almacenamiento dinámico con inserción y eliminación
-- **Colas (`queue`)** para gestión FIFO de farmacia
-- **Bucle principal (`while`)** para menú continuo
-- **Validación de entrada** para opciones no válidas
-- **Iteradores** para recorrido y eliminación segura en vectores
-
----
 
 *Desarrollado en C++ como proyecto de estructuras de datos y gestión hospitalaria.*
