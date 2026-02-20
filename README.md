@@ -1,220 +1,184 @@
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <string>
+# 🏥 Sistema de Citas y Farmacia
 
-using namespace std;
+> Sistema de gestión hospitalaria desarrollado en **C++**, diseñado para administrar citas médicas y el flujo de atención en farmacia de forma eficiente.
 
-// Estructura para almacenar los datos de la cita
+---
+
+## 📋 Tabla de Contenidos
+
+- [Descripción](#-descripción)
+- [Características](#-características)
+- [Estructuras de Datos](#-estructuras-de-datos)
+- [Funcionalidades del Menú](#-funcionalidades-del-menú)
+- [Requisitos](#-requisitos)
+- [Instalación y Uso](#-instalación-y-uso)
+- [Flujo del Sistema](#-flujo-del-sistema)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+
+---
+
+## 📖 Descripción
+
+Este sistema simula la gestión de citas en una clínica u hospital. Permite agendar, buscar, visualizar y cancelar citas médicas, así como gestionar la cola de atención en farmacia mediante una estructura **FIFO (First In, First Out)**.
+
+---
+
+## ✨ Características
+
+| Característica | Descripción |
+|---|---|
+| ✅ Agendamiento de citas | Registra paciente, médico, fecha y hora |
+| 🔍 Búsqueda de citas | Localiza citas por nombre de paciente |
+| 📋 Visualización completa | Muestra toda la agenda del sistema |
+| 🗑️ Cancelación de citas | Elimina registros del sistema |
+| 🏥 Atención de pacientes | Finaliza consultas y deriva a farmacia |
+| 💊 Cola de farmacia | Gestiona el orden de entrega de medicamentos |
+| ⚠️ Validación de horarios | Detecta y previene conflictos de agenda |
+
+---
+
+## 🗂️ Estructuras de Datos
+
+### `struct Cita`
+Almacena toda la información de una cita médica:
+
+```cpp
 struct Cita {
-    string paciente;
-    string medico;
-    string fecha;
-    string hora;
-    string estado; // Pendiente, Atendida
+    string paciente;  // Nombre del paciente
+    string medico;    // Nombre del médico asignado
+    string fecha;     // Formato: DD/MM/AAAA
+    string hora;      // Formato: HH:MM
+    string estado;    // "Pendiente" o "Atendida"
 };
+```
 
-// Variables globales (Estructuras de datos principales)
-vector<Cita> listaCitas;
-queue<string> colaFarmacia; // Cola (FIFO) para la entrega de medicamentos
+### Contenedores Globales
 
-// ================= FUNCIONES DEL SISTEMA =================
+| Variable | Tipo | Propósito |
+|---|---|---|
+| `listaCitas` | `vector<Cita>` | Almacena todas las citas registradas |
+| `colaFarmacia` | `queue<string>` | Gestiona el turno de pacientes en farmacia (FIFO) |
 
-// 1. Mostrar Menú (5% - Menú continuo)
-void mostrarMenu() {
-    cout << "\n=========================================\n";
-    cout << "   🏥 SISTEMA DE CITAS Y FARMACIA 🏥   \n";
-    cout << "=========================================\n";
-    cout << "1. Agendar nueva cita (Asignacion)\n";
-    cout << "2. Buscar cita por paciente (Busqueda)\n";
-    cout << "3. Ver todas las citas (Presentar info)\n";
-    cout << "4. Cancelar/Eliminar cita (Borrado)\n";
-    cout << "5. Atender paciente (Enviar a Farmacia)\n";
-    cout << "6. Llamar siguiente en Farmacia (Colas)\n";
-    cout << "7. Salir del sistema\n";
-    cout << "=========================================\n";
-    cout << "Seleccione una opcion (1-7): ";
-}
+---
 
-// 2. Operaciones de Asignación (5% - Guardar información)
-void agendarCita() {
-    Cita nuevaCita;
-    cout << "\n--- AGENDAR NUEVA CITA ---\n";
-    cout << "Nombre del paciente: ";
-    cin.ignore();
-    getline(cin, nuevaCita.paciente);
-    cout << "Nombre del medico: ";
-    getline(cin, nuevaCita.medico);
-    cout << "Fecha (DD/MM/AAAA): ";
-    getline(cin, nuevaCita.fecha);
-    cout << "Hora (HH:MM): ";
-    getline(cin, nuevaCita.hora);
-    nuevaCita.estado = "Pendiente";
+## 🖥️ Funcionalidades del Menú
 
-    // Validacion basica de conflictos de horario
-    bool conflicto = false;
-    for (size_t i = 0; i < listaCitas.size(); i++) {
-        if (listaCitas[i].medico == nuevaCita.medico && 
-            listaCitas[i].fecha == nuevaCita.fecha && 
-            listaCitas[i].hora == nuevaCita.hora) {
-            conflicto = true;
-            break;
-        }
-    }
+```
+=========================================
+   🏥 SISTEMA DE CITAS Y FARMACIA 🏥   
+=========================================
+1. Agendar nueva cita         → Asignación
+2. Buscar cita por paciente   → Búsqueda
+3. Ver todas las citas        → Presentar info
+4. Cancelar/Eliminar cita     → Borrado
+5. Atender paciente           → Enviar a Farmacia
+6. Llamar siguiente en Farmacia → Colas
+7. Salir del sistema
+=========================================
+```
 
-    if (conflicto) {
-        cout << "⚠️ ERROR: El medico ya tiene una cita en ese horario. Elija otro.\n";
-    } else {
-        listaCitas.push_back(nuevaCita);
-        cout << "✅ Cita agendada con exito.\n";
-    }
-}
+### Descripción de cada opción
 
-// 3. Operaciones de Búsqueda (10%)
-void buscarCita() {
-    if (listaCitas.empty()) {
-        cout << "\nNo hay citas registradas.\n";
-        return;
-    }
-    
-    string nombreBusqueda;
-    cout << "\n--- BUSCAR CITA ---\n";
-    cout << "Ingrese el nombre del paciente a buscar: ";
-    cin.ignore();
-    getline(cin, nombreBusqueda);
+**1️⃣ Agendar nueva cita**
+Solicita los datos del paciente y verifica que no exista un conflicto de horario con el mismo médico antes de guardar.
 
-    bool encontrada = false;
-    for (size_t i = 0; i < listaCitas.size(); i++) {
-        if (listaCitas[i].paciente == nombreBusqueda) {
-            cout << "\n🔍 RESULTADO: \n";
-            cout << "Paciente: " << listaCitas[i].paciente 
-                 << " | Medico: " << listaCitas[i].medico 
-                 << " | Fecha: " << listaCitas[i].fecha 
-                 << " | Hora: " << listaCitas[i].hora 
-                 << " | Estado: " << listaCitas[i].estado << "\n";
-            encontrada = true;
-        }
-    }
+**2️⃣ Buscar cita por paciente**
+Realiza una búsqueda lineal en el vector por nombre de paciente y muestra todos sus registros.
 
-    if (!encontrada) {
-        cout << "❌ No se encontraron citas para el paciente indicado.\n";
-    }
-}
+**3️⃣ Ver todas las citas**
+Lista la agenda completa con numeración, e indica cuántos pacientes están esperando en farmacia.
 
-// 4. Presentar Información (5% - Informe de datos)
-void verTodasLasCitas() {
-    cout << "\n--- AGENDA COMPLETA ---\n";
-    if (listaCitas.empty()) {
-        cout << "No hay citas en el sistema.\n";
-    } else {
-        for (size_t i = 0; i < listaCitas.size(); i++) {
-            cout << i + 1 << ". Paciente: " << listaCitas[i].paciente 
-                 << " | Medico: " << listaCitas[i].medico 
-                 << " | Horario: " << listaCitas[i].fecha << " " << listaCitas[i].hora 
-                 << " | Estado: " << listaCitas[i].estado << "\n";
-        }
-    }
-    cout << "\n📊 Pacientes esperando en Farmacia: " << colaFarmacia.size() << "\n";
-}
+**4️⃣ Cancelar / Eliminar cita**
+Busca y elimina la primera cita encontrada para el nombre indicado usando iteradores del vector.
 
-// 5. Eliminar un registro (5%)
-void cancelarCita() {
-    if (listaCitas.empty()) {
-        cout << "\nNo hay citas para cancelar.\n";
-        return;
-    }
+**5️⃣ Atender paciente**
+Cambia el estado de la cita a `"Atendida"` y, si el paciente requiere medicamentos, lo agrega a la cola de farmacia.
 
-    string nombreEliminar;
-    cout << "\n--- CANCELAR / ELIMINAR CITA ---\n";
-    cout << "Ingrese el nombre del paciente cuya cita desea cancelar: ";
-    cin.ignore();
-    getline(cin, nombreEliminar);
+**6️⃣ Llamar siguiente en Farmacia**
+Muestra al primer paciente de la cola (FIFO) y lo retira con `pop()` tras confirmar la entrega.
 
-    bool eliminada = false;
-    for (auto it = listaCitas.begin(); it != listaCitas.end(); ++it) {
-        if (it->paciente == nombreEliminar) {
-            listaCitas.erase(it); // Elimina el registro del vector
-            cout << "🗑️ La cita de " << nombreEliminar << " ha sido eliminada del sistema.\n";
-            eliminada = true;
-            break; // Salimos para no romper el iterador
-        }
-    }
+---
 
-    if (!eliminada) {
-        cout << "❌ No se encontro la cita para eliminar.\n";
-    }
-}
+## ⚙️ Requisitos
 
-// 6. Gestión de Colas (10% - Enviar a Farmacia)
-void atenderPaciente() {
-    string nombreAtender;
-    cout << "\n--- FINALIZAR CONSULTA ---\n";
-    cout << "Ingrese el nombre del paciente atendido: ";
-    cin.ignore();
-    getline(cin, nombreAtender);
+- Compilador C++ con soporte para **C++11 o superior**
+- Sistema operativo: Windows, Linux o macOS
+- Librerías estándar: `iostream`, `vector`, `queue`, `string`
 
-    bool encontrado = false;
-    for (size_t i = 0; i < listaCitas.size(); i++) {
-        if (listaCitas[i].paciente == nombreAtender && listaCitas[i].estado == "Pendiente") {
-            listaCitas[i].estado = "Atendida";
-            encontrado = true;
-            
-            char requiereMeds;
-            cout << "¿El paciente requiere medicamentos? (s/n): ";
-            cin >> requiereMeds;
-            
-            if (requiereMeds == 's' || requiereMeds == 'S') {
-                colaFarmacia.push(listaCitas[i].paciente); // Encolar (Push)
-                cout << "📝 Paciente enviado a la lista de espera de la Farmacia.\n";
-            } else {
-                cout << "✅ Consulta finalizada.\n";
-            }
-            break;
-        }
-    }
-    
-    if (!encontrado) {
-        cout << "❌ Cita no encontrada o ya fue atendida.\n";
-    }
-}
+---
 
-// Gestión de Colas (10% - Atender en Farmacia)
-void llamarSiguienteFarmacia() {
-    cout << "\n--- MODULO DE FARMACIA ---\n";
-    if (colaFarmacia.empty()) {
-        cout << "No hay pacientes en espera de medicamentos.\n";
-    } else {
-        // Muestra al primero en la fila y luego lo saca de la cola (FIFO)
-        cout << "📢 Llamando a: " << colaFarmacia.front() << " para entrega de medicamentos.\n";
-        colaFarmacia.pop(); // Desencolar (Pop)
-        cout << "✅ Medicamentos entregados.\n";
-    }
-}
+## 🚀 Instalación y Uso
 
-// ================= BUCLE PRINCIPAL =================
-int main() {
-    int opcion = 0;
-    
-    // El sistema corre hasta que el usuario decida salir
-    while (opcion != 7) {
-        mostrarMenu();
-        if (!(cin >> opcion)) { // Validacion en caso de que el usuario ingrese una letra
-            cin.clear();
-            cin.ignore(10000, '\n');
-            opcion = 0;
-        }
+### 1. Clonar o descargar el archivo
+```bash
+# Descarga el archivo sistema_citas_farmacia.cpp
+```
 
-        switch (opcion) {
-            case 1: agendarCita(); break;
-            case 2: buscarCita(); break;
-            case 3: verTodasLasCitas(); break;
-            case 4: cancelarCita(); break;
-            case 5: atenderPaciente(); break;
-            case 6: llamarSiguienteFarmacia(); break;
-            case 7: cout << "Saliendo del sistema... ¡Exito en tu entrega!\n"; break;
-            default: cout << "⚠️ Opcion no valida. Intente de nuevo.\n"; break;
-        }
-    }
-    
-    return 0;
-}
+### 2. Compilar
+```bash
+g++ sistema_citas_farmacia.cpp -o sistema
+```
+
+### 3. Ejecutar
+```bash
+# Linux / macOS
+./sistema
+
+# Windows
+sistema.exe
+```
+
+---
+
+## 🔄 Flujo del Sistema
+
+```
+  [Inicio]
+     │
+     ▼
+┌─────────────┐     ┌──────────────────┐
+│  Agendar    │────▶│  Vector de Citas  │
+│   Cita      │     │  (listaCitas)     │
+└─────────────┘     └──────────────────┘
+                            │
+                    ┌───────▼──────────┐
+                    │  Atender Cita    │
+                    │ (estado: Atendida│
+                    └───────┬──────────┘
+                            │ ¿Requiere
+                            │ medicamentos?
+                    ┌───────▼──────────┐
+                    │  Cola Farmacia   │
+                    │  (FIFO - queue)  │
+                    └───────┬──────────┘
+                            │
+                    ┌───────▼──────────┐
+                    │  Entrega de      │
+                    │  Medicamentos    │
+                    └──────────────────┘
+```
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+📦 sistema-citas-farmacia
+ ┣ 📄 sistema_citas_farmacia.cpp   ← Código fuente principal
+ ┗ 📄 README.md                    ← Documentación del proyecto
+```
+
+---
+
+## 👨‍💻 Conceptos Aplicados
+
+- **Estructuras (`struct`)** para modelar datos
+- **Vectores (`vector`)** para almacenamiento dinámico con inserción y eliminación
+- **Colas (`queue`)** para gestión FIFO de farmacia
+- **Bucle principal (`while`)** para menú continuo
+- **Validación de entrada** para opciones no válidas
+- **Iteradores** para recorrido y eliminación segura en vectores
+
+---
+
+*Desarrollado en C++ como proyecto de estructuras de datos y gestión hospitalaria.*
