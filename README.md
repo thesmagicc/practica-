@@ -169,6 +169,14 @@ sistema.exe
 ```
 
 ---
+# 📌 Información del Estudiante
 
+| Campo | Detalle |
+|---|---|
+| 👤 **Nombre** | Sebastián Sánchez Gómez |
+| 📅 **Fecha** | 20 de Febrero de 2026 |
+| 📝 **Práctica** | Práctica 1 |
+
+---
 
 *Desarrollado en C++ como proyecto de estructuras de datos y gestión hospitalaria.*
